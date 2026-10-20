@@ -213,6 +213,7 @@ func NewRootCommand(env Env) *cobra.Command {
 		newGetCmd(rt),
 		newSyncCmd(rt),
 		newStatusCmd(rt),
+		newTUICmd(rt),
 	)
 	return root
 }

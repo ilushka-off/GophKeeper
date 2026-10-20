@@ -43,6 +43,7 @@ type harness struct {
 	dataDir string
 	env     map[string]string
 	offline bool
+	stdin   string
 }
 
 func newHarness(t *testing.T, srv *testutil.Server) *harness {
@@ -60,7 +61,7 @@ func (h *harness) run(prompts []string, args ...string) (string, string, int) {
 	h.t.Helper()
 	var stdout, stderr bytes.Buffer
 	env := Env{
-		Stdin:    strings.NewReader(""),
+		Stdin:    strings.NewReader(h.stdin),
 		Stdout:   &stdout,
 		Stderr:   &stderr,
 		Getenv:   func(k string) string { return h.env[k] },
@@ -251,6 +252,16 @@ func TestOTP(t *testing.T) {
 	assert.NotEmpty(t, h.fail("add", "otp", "-n", "x", "--secret", "!!!"))
 	assert.NotEmpty(t, h.fail("add", "otp", "--uri", "https://example.com"))
 	assert.NotEmpty(t, h.fail("add", "otp", "-n", "x", "--secret", "JBSWY3DPEHPK3PXP", "--uri", "otpauth://totp/x?secret=JBSWY3DPEHPK3PXP"))
+}
+
+func TestTUI(t *testing.T) {
+	h := newHarness(t, testutil.StartServer(t))
+	assert.NotEmpty(t, h.fail("tui"))
+
+	h, _ = registered(t)
+	h.add("text", "-n", "note", "--text", "hello")
+	h.stdin = "q"
+	assert.Contains(t, h.ok("tui"), "GophKeeper")
 }
 
 func TestAddValidation(t *testing.T) {
