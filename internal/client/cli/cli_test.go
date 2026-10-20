@@ -230,6 +230,29 @@ func TestScenario(t *testing.T) {
 	assert.Contains(t, h.fail("sync"), "not logged in")
 }
 
+func TestOTP(t *testing.T) {
+	h, _ := registered(t)
+	id := h.add("otp", "-n", "github", "--secret", "JBSWY3DPEHPK3PXP", "--account", "ilya")
+	out := h.ok("get", id)
+	assert.Contains(t, out, "Account:")
+	assert.Regexp(t, `Code:\s+\d{6} \(valid \d+s\)`, out)
+
+	id2 := h.add("otp", "--uri", "otpauth://totp/GitLab:ilya?secret=JBSWY3DPEHPK3PXP&digits=8")
+	out = h.ok("get", id2)
+	assert.Contains(t, out, "Name:")
+	assert.Contains(t, out, "GitLab")
+	assert.Regexp(t, `Code:\s+\d{8} `, out)
+
+	h.ok("edit", id, "--digits", "8", "--issuer", "GitHub")
+	assert.Regexp(t, `Code:\s+\d{8} `, h.ok("get", id))
+	assert.Contains(t, h.ok("list", "-t", "otp"), "github")
+
+	assert.NotEmpty(t, h.fail("add", "otp", "-n", "x"))
+	assert.NotEmpty(t, h.fail("add", "otp", "-n", "x", "--secret", "!!!"))
+	assert.NotEmpty(t, h.fail("add", "otp", "--uri", "https://example.com"))
+	assert.NotEmpty(t, h.fail("add", "otp", "-n", "x", "--secret", "JBSWY3DPEHPK3PXP", "--uri", "otpauth://totp/x?secret=JBSWY3DPEHPK3PXP"))
+}
+
 func TestAddValidation(t *testing.T) {
 	h, _ := registered(t)
 	assert.Contains(t, h.fail("add", "card", "-n", "bad", "--number", "1234"), "invalid")

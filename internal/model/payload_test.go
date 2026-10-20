@@ -15,7 +15,7 @@ func TestRecordTypeValid(t *testing.T) {
 		assert.True(t, rt.Valid(), rt)
 	}
 	assert.False(t, RecordType("").Valid())
-	assert.False(t, RecordType("otp").Valid())
+	assert.False(t, RecordType("passport").Valid())
 }
 
 func TestPayloadRoundTrip(t *testing.T) {
@@ -47,7 +47,7 @@ func TestMarshalPayloadNilData(t *testing.T) {
 func TestUnmarshalPayloadErrors(t *testing.T) {
 	tests := map[string]string{
 		"not json":     `{`,
-		"unknown type": `{"name":"x","type":"otp","data":{}}`,
+		"unknown type": `{"name":"x","type":"passport","data":{}}`,
 		"bad data":     `{"name":"x","type":"text","data":{"content":1}}`,
 	}
 	for name, in := range tests {
@@ -56,7 +56,7 @@ func TestUnmarshalPayloadErrors(t *testing.T) {
 			require.Error(t, err)
 		})
 	}
-	_, err := UnmarshalPayload([]byte(`{"name":"x","type":"otp","data":{}}`))
+	_, err := UnmarshalPayload([]byte(`{"name":"x","type":"passport","data":{}}`))
 	require.ErrorIs(t, err, ErrInvalidArgument)
 }
 
@@ -139,6 +139,7 @@ func TestDataTypes(t *testing.T) {
 	assert.Equal(t, TypeText, Text{}.Type())
 	assert.Equal(t, TypeBinary, Binary{}.Type())
 	assert.Equal(t, TypeCard, Card{}.Type())
+	assert.Equal(t, TypeOTP, OTP{}.Type())
 }
 
 type otherData struct{}
@@ -158,4 +159,24 @@ func TestPayloadJSONShape(t *testing.T) {
 	require.NoError(t, json.Unmarshal(b, &raw))
 	assert.Equal(t, "text", raw["type"])
 	assert.NotContains(t, raw, "meta")
+}
+
+func TestOTPPayload(t *testing.T) {
+	o := OTP{Secret: "jbsw y3dp ehpk 3pxp", Issuer: "GitHub", Account: "ilya"}
+	require.NoError(t, o.Validate())
+	assert.Equal(t, TypeOTP, o.Type())
+
+	b, err := MarshalPayload(Payload{Name: "github", Data: o})
+	require.NoError(t, err)
+	p, err := UnmarshalPayload(b)
+	require.NoError(t, err)
+	assert.Equal(t, o, p.Data)
+
+	code, left, err := o.Code(time.Unix(59, 0))
+	require.NoError(t, err)
+	assert.Len(t, code, 6)
+	assert.Equal(t, time.Second, left)
+
+	require.ErrorIs(t, OTP{}.Validate(), ErrInvalidArgument)
+	require.ErrorIs(t, OTP{Secret: "JBSWY3DPEHPK3PXP", Digits: 3}.Validate(), ErrInvalidArgument)
 }

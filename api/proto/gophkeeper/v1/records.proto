@@ -14,6 +14,8 @@ enum RecordType {
   RECORD_TYPE_TEXT = 2;
   RECORD_TYPE_BINARY = 3;
   RECORD_TYPE_CARD = 4;
+  // A TOTP secret for generating one-time codes.
+  RECORD_TYPE_OTP = 5;
 }
 
 // Record is an encrypted user record as it is stored on the server.

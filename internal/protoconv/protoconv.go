@@ -17,6 +17,7 @@ var typeToProto = map[model.RecordType]pb.RecordType{
 	model.TypeText:        pb.RecordType_RECORD_TYPE_TEXT,
 	model.TypeBinary:      pb.RecordType_RECORD_TYPE_BINARY,
 	model.TypeCard:        pb.RecordType_RECORD_TYPE_CARD,
+	model.TypeOTP:         pb.RecordType_RECORD_TYPE_OTP,
 }
 
 // TypeToProto converts a domain record type to protobuf.

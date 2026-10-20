@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"text/tabwriter"
+	"time"
 	"unicode/utf8"
 
 	"github.com/spf13/cobra"
@@ -213,7 +214,7 @@ func newListCmd(rt *runtime) *cobra.Command {
 			return tw.Flush()
 		},
 	}
-	cmd.Flags().StringVarP(&typ, "type", "t", "", "show only records of this type: credentials, text, binary, card")
+	cmd.Flags().StringVarP(&typ, "type", "t", "", "show only records of this type: credentials, text, binary, card, otp")
 	return cmd
 }
 
@@ -308,6 +309,12 @@ func printEntry(w interface{ Write([]byte) (int, error) }, e app.Entry) {
 		row("Holder", d.Holder)
 		row("Expiry", d.Expiry)
 		row("CVV", d.CVV)
+	case model.OTP:
+		row("Issuer", d.Issuer)
+		row("Account", d.Account)
+		if code, left, err := d.Code(time.Now()); err == nil {
+			row("Code", fmt.Sprintf("%s (valid %ds)", code, int(left.Seconds())))
+		}
 	}
 	row("Meta", e.Payload.Meta)
 	row("Updated", e.UpdatedAt.Local().Format("2006-01-02 15:04:05"))

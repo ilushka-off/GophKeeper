@@ -32,6 +32,8 @@ const (
 	RecordType_RECORD_TYPE_TEXT        RecordType = 2
 	RecordType_RECORD_TYPE_BINARY      RecordType = 3
 	RecordType_RECORD_TYPE_CARD        RecordType = 4
+	// A TOTP secret for generating one-time codes.
+	RecordType_RECORD_TYPE_OTP RecordType = 5
 )
 
 // Enum value maps for RecordType.
@@ -42,6 +44,7 @@ var (
 		2: "RECORD_TYPE_TEXT",
 		3: "RECORD_TYPE_BINARY",
 		4: "RECORD_TYPE_CARD",
+		5: "RECORD_TYPE_OTP",
 	}
 	RecordType_value = map[string]int32{
 		"RECORD_TYPE_UNSPECIFIED": 0,
@@ -49,6 +52,7 @@ var (
 		"RECORD_TYPE_TEXT":        2,
 		"RECORD_TYPE_BINARY":      3,
 		"RECORD_TYPE_CARD":        4,
+		"RECORD_TYPE_OTP":         5,
 	}
 )
 
@@ -190,14 +194,15 @@ const file_gophkeeper_v1_records_proto_rawDesc = "" +
 	"\brevision\x18\x05 \x01(\x03R\brevision\x12\x18\n" +
 	"\adeleted\x18\x06 \x01(\bR\adeleted\x129\n" +
 	"\n" +
-	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt*\x8a\x01\n" +
+	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt*\x9f\x01\n" +
 	"\n" +
 	"RecordType\x12\x1b\n" +
 	"\x17RECORD_TYPE_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17RECORD_TYPE_CREDENTIALS\x10\x01\x12\x14\n" +
 	"\x10RECORD_TYPE_TEXT\x10\x02\x12\x16\n" +
 	"\x12RECORD_TYPE_BINARY\x10\x03\x12\x14\n" +
-	"\x10RECORD_TYPE_CARD\x10\x04BFZDgithub.com/ilushka-off/GophKeeper/api/gen/gophkeeper/v1;gophkeeperv1b\x06proto3"
+	"\x10RECORD_TYPE_CARD\x10\x04\x12\x13\n" +
+	"\x0fRECORD_TYPE_OTP\x10\x05BFZDgithub.com/ilushka-off/GophKeeper/api/gen/gophkeeper/v1;gophkeeperv1b\x06proto3"
 
 var (
 	file_gophkeeper_v1_records_proto_rawDescOnce sync.Once

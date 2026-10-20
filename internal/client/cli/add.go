@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/ilushka-off/GophKeeper/internal/model"
+	"github.com/ilushka-off/GophKeeper/internal/otp"
 )
 
 type contextLike = context.Context
@@ -19,6 +20,9 @@ type recordFlags struct {
 	login, password        string
 	text, file             string
 	number, holder, expiry string
+	secret, uri, issuer    string
+	account, algorithm     string
+	digits, period         int
 	cvv                    string
 }
 
@@ -62,6 +66,7 @@ func newAddCmd(rt *runtime) *cobra.Command {
 		newAddTextCmd(rt),
 		newAddBinaryCmd(rt),
 		newAddCardCmd(rt),
+		newAddOTPCmd(rt),
 	)
 	return cmd
 }
@@ -181,6 +186,49 @@ func newAddCardCmd(rt *runtime) *cobra.Command {
 	return cmd
 }
 
+func (f *recordFlags) registerOTP(fs *pflag.FlagSet) {
+	fs.StringVar(&f.secret, "secret", "", "TOTP secret in base32")
+	fs.StringVar(&f.issuer, "issuer", "", "service that issued the secret")
+	fs.StringVar(&f.account, "account", "", "account name at the service")
+	fs.StringVar(&f.algorithm, "algorithm", "", "SHA1 (default), SHA256 or SHA512")
+	fs.IntVar(&f.digits, "digits", 0, "code length, 6 by default")
+	fs.IntVar(&f.period, "period", 0, "code lifetime in seconds, 30 by default")
+}
+
+func newAddOTPCmd(rt *runtime) *cobra.Command {
+	var f recordFlags
+	cmd := &cobra.Command{
+		Use:     "otp",
+		Aliases: []string{"totp"},
+		Short:   "Add a TOTP secret for one-time codes (--secret or an otpauth:// --uri)",
+		Args:    cobra.NoArgs,
+	}
+	cmd.RunE = addRun(rt, func(ctx context.Context) (string, error) {
+		data := model.OTP{Secret: f.secret, Issuer: f.issuer, Account: f.account,
+			Algorithm: f.algorithm, Digits: f.digits, Period: f.period}
+		if f.uri != "" {
+			p, err := otp.ParseURI(f.uri)
+			if err != nil {
+				return "", err
+			}
+			data = model.OTP{Secret: p.Secret, Issuer: p.Issuer, Account: p.Account,
+				Algorithm: p.Algorithm, Digits: p.Digits, Period: p.Period}
+		}
+		name := f.name
+		if name == "" {
+			name = data.Issuer
+		}
+		id, err := rt.app.Add(ctx, model.Payload{Name: name, Meta: f.meta, Data: data})
+		return id.String(), err
+	})
+	f.registerCommon(cmd.Flags())
+	f.registerOTP(cmd.Flags())
+	cmd.Flags().StringVar(&f.uri, "uri", "", "otpauth://totp/... URI from the service QR code")
+	cmd.MarkFlagsMutuallyExclusive("secret", "uri")
+	cmd.MarkFlagsOneRequired("secret", "uri")
+	return cmd
+}
+
 func newEditCmd(rt *runtime) *cobra.Command {
 	var f recordFlags
 	cmd := &cobra.Command{
@@ -225,6 +273,7 @@ func newEditCmd(rt *runtime) *cobra.Command {
 	f.registerCredentials(cmd.Flags())
 	f.registerText(cmd.Flags(), "text: read new text from this file; binary: replace the file")
 	f.registerCard(cmd.Flags())
+	f.registerOTP(cmd.Flags())
 	return cmd
 }
 
@@ -233,6 +282,7 @@ var typeFlags = map[model.RecordType][]string{
 	model.TypeCredentials: {"login", "password"},
 	model.TypeText:        {"text", "file"},
 	model.TypeBinary:      {"file"},
+	model.TypeOTP:         {"secret", "issuer", "account", "algorithm", "digits", "period"},
 	model.TypeCard:        {"number", "holder", "expiry", "cvv"},
 }
 
@@ -306,6 +356,26 @@ func applyEdit(flags *pflag.FlagSet, f *recordFlags, p *model.Payload) error {
 		}
 		if flags.Changed("cvv") {
 			d.CVV = f.cvv
+		}
+		p.Data = d
+	case model.OTP:
+		if flags.Changed("secret") {
+			d.Secret = f.secret
+		}
+		if flags.Changed("issuer") {
+			d.Issuer = f.issuer
+		}
+		if flags.Changed("account") {
+			d.Account = f.account
+		}
+		if flags.Changed("algorithm") {
+			d.Algorithm = f.algorithm
+		}
+		if flags.Changed("digits") {
+			d.Digits = f.digits
+		}
+		if flags.Changed("period") {
+			d.Period = f.period
 		}
 		p.Data = d
 	}

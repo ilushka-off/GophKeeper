@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ilushka-off/GophKeeper/internal/otp"
 )
 
 // Payload is the plaintext content of a record: a name, free-form metadata and typed data.
@@ -49,6 +51,40 @@ type Card struct {
 	Holder string `json:"holder"`
 	Expiry string `json:"expiry"`
 	CVV    string `json:"cvv"`
+}
+
+// OTP is a TOTP generator: the shared secret and parameters from the service.
+type OTP struct {
+	Secret    string `json:"secret"`
+	Issuer    string `json:"issuer,omitempty"`
+	Account   string `json:"account,omitempty"`
+	Algorithm string `json:"algorithm,omitempty"`
+	Digits    int    `json:"digits,omitempty"`
+	Period    int    `json:"period,omitempty"`
+}
+
+// Params returns the generator parameters with defaults filled in.
+func (o OTP) Params() otp.Params {
+	return otp.Params{
+		Secret: o.Secret, Issuer: o.Issuer, Account: o.Account,
+		Algorithm: o.Algorithm, Digits: o.Digits, Period: o.Period,
+	}.Normalize()
+}
+
+// Code returns the current one-time code and how long it stays valid.
+func (o OTP) Code(now time.Time) (string, time.Duration, error) {
+	return o.Params().Code(now)
+}
+
+// Type implements Data.
+func (OTP) Type() RecordType { return TypeOTP }
+
+// Validate implements Data.
+func (o OTP) Validate() error {
+	if err := o.Params().Validate(); err != nil {
+		return fmt.Errorf("%w: %w", ErrInvalidArgument, err)
+	}
+	return nil
 }
 
 // Type implements Data.
@@ -206,6 +242,8 @@ func UnmarshalPayload(b []byte) (Payload, error) {
 		data = &Binary{}
 	case TypeCard:
 		data = &Card{}
+	case TypeOTP:
+		data = &OTP{}
 	default:
 		return Payload{}, fmt.Errorf("%w: unknown record type %q", ErrInvalidArgument, raw.Type)
 	}
@@ -224,6 +262,8 @@ func deref(d Data) Data {
 	case *Binary:
 		return *v
 	case *Card:
+		return *v
+	case *OTP:
 		return *v
 	}
 	return d

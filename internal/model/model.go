@@ -32,15 +32,16 @@ const (
 	TypeText        RecordType = "text"
 	TypeBinary      RecordType = "binary"
 	TypeCard        RecordType = "card"
+	TypeOTP         RecordType = "otp"
 )
 
 // RecordTypes lists all supported record types in display order.
-var RecordTypes = []RecordType{TypeCredentials, TypeText, TypeBinary, TypeCard}
+var RecordTypes = []RecordType{TypeCredentials, TypeText, TypeBinary, TypeCard, TypeOTP}
 
 // Valid reports whether t is one of the supported record types.
 func (t RecordType) Valid() bool {
 	switch t {
-	case TypeCredentials, TypeText, TypeBinary, TypeCard:
+	case TypeCredentials, TypeText, TypeBinary, TypeCard, TypeOTP:
 		return true
 	}
 	return false

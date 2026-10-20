@@ -18,7 +18,7 @@ func TestTypeConversion(t *testing.T) {
 		assert.NotEqual(t, pb.RecordType_RECORD_TYPE_UNSPECIFIED, p)
 		assert.Equal(t, rt, TypeFromProto(p))
 	}
-	assert.Equal(t, pb.RecordType_RECORD_TYPE_UNSPECIFIED, TypeToProto("otp"))
+	assert.Equal(t, pb.RecordType_RECORD_TYPE_UNSPECIFIED, TypeToProto("passport"))
 	assert.Equal(t, model.RecordType(""), TypeFromProto(pb.RecordType_RECORD_TYPE_UNSPECIFIED))
 	assert.Equal(t, model.RecordType(""), TypeFromProto(pb.RecordType(99)))
 }
