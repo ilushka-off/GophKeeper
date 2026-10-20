@@ -1,22 +1,27 @@
-// Package app wires the server together: storage, services, the TLS gRPC server
-// and graceful shutdown.
+// Package app wires the server together: storage, services, the TLS gRPC server,
+// the optional REST gateway and graceful shutdown.
 package app
 
 import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net"
+	"net/http"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
 	"github.com/ilushka-off/GophKeeper/internal/crypto"
 	"github.com/ilushka-off/GophKeeper/internal/server/config"
+	"github.com/ilushka-off/GophKeeper/internal/server/gateway"
 	"github.com/ilushka-off/GophKeeper/internal/server/grpcapi"
 	"github.com/ilushka-off/GophKeeper/internal/server/service"
 	"github.com/ilushka-off/GophKeeper/internal/server/storage/memory"
@@ -78,17 +83,67 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	creds, err := credentials.NewServerTLSFromFile(cfg.TLSCert, cfg.TLSKey)
+	cert, err := tls.LoadX509KeyPair(cfg.TLSCert, cfg.TLSKey)
 	if err != nil {
 		return fmt.Errorf("load TLS certificate: %w", err)
 	}
-	srv := grpcapi.NewServer(services, log, grpc.Creds(creds))
+	srv := grpcapi.NewServer(services, log, grpc.Creds(credentials.NewServerTLSFromCert(&cert)))
 
-	lis, err := (&net.ListenConfig{}).Listen(ctx, "tcp", cfg.Address)
+	lc := &net.ListenConfig{}
+	lis, err := lc.Listen(ctx, "tcp", cfg.Address)
 	if err != nil {
 		return fmt.Errorf("listen %s: %w", cfg.Address, err)
 	}
-	return Serve(ctx, srv, lis, cfg.ShutdownTimeout, log)
+	if cfg.HTTPAddress == "" {
+		return Serve(ctx, srv, lis, cfg.ShutdownTimeout, log)
+	}
+
+	gw, err := gateway.New(ctx, services, log)
+	if err != nil {
+		_ = lis.Close()
+		return err
+	}
+	defer gw.Close()
+	httpLis, err := lc.Listen(ctx, "tcp", cfg.HTTPAddress)
+	if err != nil {
+		_ = lis.Close()
+		return fmt.Errorf("listen %s: %w", cfg.HTTPAddress, err)
+	}
+	tlsConf := &tls.Config{Certificates: []tls.Certificate{cert}, MinVersion: tls.VersionTLS12}
+	httpSrv := &http.Server{Handler: gw, ReadHeaderTimeout: 10 * time.Second}
+
+	g, gctx := errgroup.WithContext(ctx)
+	g.Go(func() error { return Serve(gctx, srv, lis, cfg.ShutdownTimeout, log) })
+	g.Go(func() error {
+		return ServeHTTP(gctx, httpSrv, tls.NewListener(httpLis, tlsConf), cfg.ShutdownTimeout, log)
+	})
+	return g.Wait()
+}
+
+// ServeHTTP runs srv on lis until ctx is cancelled, then shuts it down, waiting up to
+// timeout for in-flight requests.
+func ServeHTTP(ctx context.Context, srv *http.Server, lis net.Listener, timeout time.Duration, log *slog.Logger) error {
+	errCh := make(chan error, 1)
+	go func() {
+		log.Info("REST gateway started", "address", lis.Addr().String())
+		errCh <- srv.Serve(lis)
+	}()
+
+	select {
+	case err := <-errCh:
+		return fmt.Errorf("serve http: %w", err)
+	case <-ctx.Done():
+	}
+
+	sctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), timeout)
+	defer cancel()
+	if err := srv.Shutdown(sctx); err != nil {
+		log.Warn("REST gateway shutdown timed out, closing", "error", err)
+		_ = srv.Close()
+	}
+	<-errCh
+	log.Info("REST gateway stopped")
+	return nil
 }
 
 // Serve runs srv on lis until ctx is cancelled. On cancellation it waits up to timeout

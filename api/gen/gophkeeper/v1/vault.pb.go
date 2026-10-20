@@ -7,6 +7,7 @@
 package gophkeeperv1
 
 import (
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -497,7 +498,7 @@ var File_gophkeeper_v1_vault_proto protoreflect.FileDescriptor
 
 const file_gophkeeper_v1_vault_proto_rawDesc = "" +
 	"\n" +
-	"\x19gophkeeper/v1/vault.proto\x12\rgophkeeper.v1\x1a\x1bgophkeeper/v1/records.proto\"\"\n" +
+	"\x19gophkeeper/v1/vault.proto\x12\rgophkeeper.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgophkeeper/v1/records.proto\"\"\n" +
 	"\x10GetRecordRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"B\n" +
 	"\x11GetRecordResponse\x12-\n" +
@@ -518,15 +519,15 @@ const file_gophkeeper_v1_vault_proto_rawDesc = "" +
 	"\x05chunk\x18\x01 \x01(\fR\x05chunk\",\n" +
 	"\x11DeleteBlobRequest\x12\x17\n" +
 	"\ablob_id\x18\x01 \x01(\tR\x06blobId\"\x14\n" +
-	"\x12DeleteBlobResponse2\xb7\x03\n" +
-	"\fVaultService\x12N\n" +
-	"\tGetRecord\x12\x1f.gophkeeper.v1.GetRecordRequest\x1a .gophkeeper.v1.GetRecordResponse\x12T\n" +
-	"\vListRecords\x12!.gophkeeper.v1.ListRecordsRequest\x1a\".gophkeeper.v1.ListRecordsResponse\x12S\n" +
+	"\x12DeleteBlobResponse2\xb0\x04\n" +
+	"\fVaultService\x12l\n" +
+	"\tGetRecord\x12\x1f.gophkeeper.v1.GetRecordRequest\x1a .gophkeeper.v1.GetRecordResponse\"\x1c\x82\xd3\xe4\x93\x02\x16\x12\x14/api/v1/records/{id}\x12m\n" +
+	"\vListRecords\x12!.gophkeeper.v1.ListRecordsRequest\x1a\".gophkeeper.v1.ListRecordsResponse\"\x17\x82\xd3\xe4\x93\x02\x11\x12\x0f/api/v1/records\x12S\n" +
 	"\n" +
-	"UploadBlob\x12 .gophkeeper.v1.UploadBlobRequest\x1a!.gophkeeper.v1.UploadBlobResponse(\x01\x12Y\n" +
-	"\fDownloadBlob\x12\".gophkeeper.v1.DownloadBlobRequest\x1a#.gophkeeper.v1.DownloadBlobResponse0\x01\x12Q\n" +
+	"UploadBlob\x12 .gophkeeper.v1.UploadBlobRequest\x1a!.gophkeeper.v1.UploadBlobResponse(\x01\x12z\n" +
+	"\fDownloadBlob\x12\".gophkeeper.v1.DownloadBlobRequest\x1a#.gophkeeper.v1.DownloadBlobResponse\"\x1f\x82\xd3\xe4\x93\x02\x19\x12\x17/api/v1/blobs/{blob_id}0\x01\x12r\n" +
 	"\n" +
-	"DeleteBlob\x12 .gophkeeper.v1.DeleteBlobRequest\x1a!.gophkeeper.v1.DeleteBlobResponseBFZDgithub.com/ilushka-off/GophKeeper/api/gen/gophkeeper/v1;gophkeeperv1b\x06proto3"
+	"DeleteBlob\x12 .gophkeeper.v1.DeleteBlobRequest\x1a!.gophkeeper.v1.DeleteBlobResponse\"\x1f\x82\xd3\xe4\x93\x02\x19*\x17/api/v1/blobs/{blob_id}BFZDgithub.com/ilushka-off/GophKeeper/api/gen/gophkeeper/v1;gophkeeperv1b\x06proto3"
 
 var (
 	file_gophkeeper_v1_vault_proto_rawDescOnce sync.Once

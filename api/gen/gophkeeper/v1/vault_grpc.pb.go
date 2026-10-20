@@ -37,9 +37,10 @@ type VaultServiceClient interface {
 	// ListRecords returns all live records of the owner.
 	ListRecords(ctx context.Context, in *ListRecordsRequest, opts ...grpc.CallOption) (*ListRecordsResponse, error)
 	// UploadBlob stores encrypted binary data. The first message carries the blob id,
-	// the following ones carry chunks of at most 1 MB.
+	// the following ones carry chunks of at most 1 MB. Available only over gRPC.
 	UploadBlob(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[UploadBlobRequest, UploadBlobResponse], error)
 	// DownloadBlob streams encrypted binary data in chunks.
+	// Over REST the chunks come as newline-delimited JSON objects.
 	DownloadBlob(ctx context.Context, in *DownloadBlobRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[DownloadBlobResponse], error)
 	// DeleteBlob removes binary data that is no longer referenced.
 	DeleteBlob(ctx context.Context, in *DeleteBlobRequest, opts ...grpc.CallOption) (*DeleteBlobResponse, error)
@@ -126,9 +127,10 @@ type VaultServiceServer interface {
 	// ListRecords returns all live records of the owner.
 	ListRecords(context.Context, *ListRecordsRequest) (*ListRecordsResponse, error)
 	// UploadBlob stores encrypted binary data. The first message carries the blob id,
-	// the following ones carry chunks of at most 1 MB.
+	// the following ones carry chunks of at most 1 MB. Available only over gRPC.
 	UploadBlob(grpc.ClientStreamingServer[UploadBlobRequest, UploadBlobResponse]) error
 	// DownloadBlob streams encrypted binary data in chunks.
+	// Over REST the chunks come as newline-delimited JSON objects.
 	DownloadBlob(*DownloadBlobRequest, grpc.ServerStreamingServer[DownloadBlobResponse]) error
 	// DeleteBlob removes binary data that is no longer referenced.
 	DeleteBlob(context.Context, *DeleteBlobRequest) (*DeleteBlobResponse, error)

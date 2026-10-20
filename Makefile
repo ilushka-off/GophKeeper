@@ -10,11 +10,18 @@ LDFLAGS   := -s -w \
 PLATFORMS := linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64
 COVER_MIN := 70
 
-.PHONY: all gen lint test test-integration cover build server client clients cert docker-up docker-down clean
+.PHONY: all tools gen lint test test-integration cover build server client clients cert docker-up docker-down clean
 
 all: lint test build
 
-## gen: regenerate protobuf and gRPC code with buf
+## tools: install the protoc plugins used by buf generate
+tools:
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.6
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
+	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.27.2
+	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.27.2
+
+## gen: regenerate protobuf, gRPC, grpc-gateway code and the OpenAPI spec with buf
 gen:
 	buf lint
 	buf generate

@@ -7,6 +7,8 @@
 package gophkeeperv1
 
 import (
+	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options"
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -561,7 +563,7 @@ var File_gophkeeper_v1_auth_proto protoreflect.FileDescriptor
 
 const file_gophkeeper_v1_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x18gophkeeper/v1/auth.proto\x12\rgophkeeper.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x98\x01\n" +
+	"\x18gophkeeper/v1/auth.proto\x12\rgophkeeper.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\x98\x01\n" +
 	"\x06Tokens\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12#\n" +
 	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\x12F\n" +
@@ -589,13 +591,19 @@ const file_gophkeeper_v1_auth_proto_rawDesc = "" +
 	"\x06tokens\x18\x01 \x01(\v2\x15.gophkeeper.v1.TokensR\x06tokens\"4\n" +
 	"\rLogoutRequest\x12#\n" +
 	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\"\x10\n" +
-	"\x0eLogoutResponse2\xf9\x02\n" +
-	"\vAuthService\x12K\n" +
-	"\bRegister\x12\x1e.gophkeeper.v1.RegisterRequest\x1a\x1f.gophkeeper.v1.RegisterResponse\x12H\n" +
-	"\aGetSalt\x12\x1d.gophkeeper.v1.GetSaltRequest\x1a\x1e.gophkeeper.v1.GetSaltResponse\x12B\n" +
-	"\x05Login\x12\x1b.gophkeeper.v1.LoginRequest\x1a\x1c.gophkeeper.v1.LoginResponse\x12H\n" +
-	"\aRefresh\x12\x1d.gophkeeper.v1.RefreshRequest\x1a\x1e.gophkeeper.v1.RefreshResponse\x12E\n" +
-	"\x06Logout\x12\x1c.gophkeeper.v1.LogoutRequest\x1a\x1d.gophkeeper.v1.LogoutResponseBFZDgithub.com/ilushka-off/GophKeeper/api/gen/gophkeeper/v1;gophkeeperv1b\x06proto3"
+	"\x0eLogoutResponse2\xb7\x04\n" +
+	"\vAuthService\x12r\n" +
+	"\bRegister\x12\x1e.gophkeeper.v1.RegisterRequest\x1a\x1f.gophkeeper.v1.RegisterResponse\"%\x92A\x02b\x00\x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/api/v1/auth/register\x12p\n" +
+	"\aGetSalt\x12\x1d.gophkeeper.v1.GetSaltRequest\x1a\x1e.gophkeeper.v1.GetSaltResponse\"&\x92A\x02b\x00\x82\xd3\xe4\x93\x02\x1b\x12\x19/api/v1/auth/salt/{login}\x12f\n" +
+	"\x05Login\x12\x1b.gophkeeper.v1.LoginRequest\x1a\x1c.gophkeeper.v1.LoginResponse\"\"\x92A\x02b\x00\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/api/v1/auth/login\x12n\n" +
+	"\aRefresh\x12\x1d.gophkeeper.v1.RefreshRequest\x1a\x1e.gophkeeper.v1.RefreshResponse\"$\x92A\x02b\x00\x82\xd3\xe4\x93\x02\x19:\x01*\"\x14/api/v1/auth/refresh\x12j\n" +
+	"\x06Logout\x12\x1c.gophkeeper.v1.LogoutRequest\x1a\x1d.gophkeeper.v1.LogoutResponse\"#\x92A\x02b\x00\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/api/v1/auth/logoutB\xb4\x03\x92A\xea\x02\x12\xe6\x01\n" +
+	"\x0eGophKeeper API\x12\xce\x01REST view of the GophKeeper gRPC API. Record payloads and blobs are encrypted on the client, the server never sees them in plaintext. Bytes fields are base64 in JSON. UploadBlob is available only over gRPC.2\x031.0*\x01\x022\x10application/json:\x10application/jsonZJ\n" +
+	"H\n" +
+	"\x06Bearer\x12>\b\x02\x12)Access token in the form \"Bearer <token>\"\x1a\rAuthorization \x02b\f\n" +
+	"\n" +
+	"\n" +
+	"\x06Bearer\x12\x00ZDgithub.com/ilushka-off/GophKeeper/api/gen/gophkeeper/v1;gophkeeperv1b\x06proto3"
 
 var (
 	file_gophkeeper_v1_auth_proto_rawDescOnce sync.Once

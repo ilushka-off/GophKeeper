@@ -10,5 +10,5 @@ RUN CGO_ENABLED=0 go build \
 
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /out/gophkeeper-server /gophkeeper-server
-EXPOSE 3200
+EXPOSE 3200 8443
 ENTRYPOINT ["/gophkeeper-server"]

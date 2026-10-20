@@ -6,5 +6,20 @@ plugins:
   - local: protoc-gen-go-grpc
     out: api/gen
     opt: paths=source_relative
+  - local: protoc-gen-grpc-gateway
+    out: api/gen
+    opt:
+      - paths=source_relative
+      - generate_unbound_methods=false
+  - local: protoc-gen-openapiv2
+    out: api/openapi
+    opt:
+      - allow_merge=true
+      - merge_file_name=gophkeeper
+      - disable_default_errors=false
+    strategy: all
 inputs:
   - directory: api/proto
+    exclude_paths:
+      - api/proto/google
+      - api/proto/protoc-gen-openapiv2

@@ -18,6 +18,7 @@ func TestLoadDefaults(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, ":3200", c.Address)
 	assert.Empty(t, c.DatabaseDSN)
+	assert.Empty(t, c.HTTPAddress, "gateway is disabled by default")
 	assert.Equal(t, "certs/server.crt", c.TLSCert)
 	assert.Equal(t, "certs/server.key", c.TLSKey)
 	assert.Equal(t, 15*time.Minute, c.AccessTTL)
@@ -36,26 +37,26 @@ func TestLoadNilGetenv(t *testing.T) {
 
 func TestLoadFlagsAndEnv(t *testing.T) {
 	args := []string{
-		"-a", ":1", "-d", "dsn-flag", "-tls-cert", "c", "-tls-key", "k", "-jwt-secret", "s",
+		"-a", ":1", "-http-address", ":8", "-d", "dsn-flag", "-tls-cert", "c", "-tls-key", "k", "-jwt-secret", "s",
 		"-access-ttl", "1m", "-refresh-ttl", "2h", "-max-blob-size", "10",
 		"-shutdown-timeout", "3s", "-log-level", "debug",
 	}
 	c, err := Load(args, env(nil))
 	require.NoError(t, err)
 	assert.Equal(t, Config{
-		Address: ":1", DatabaseDSN: "dsn-flag", TLSCert: "c", TLSKey: "k", JWTSecret: "s",
+		Address: ":1", HTTPAddress: ":8", DatabaseDSN: "dsn-flag", TLSCert: "c", TLSKey: "k", JWTSecret: "s",
 		AccessTTL: time.Minute, RefreshTTL: 2 * time.Hour, MaxBlobSize: 10,
 		ShutdownTimeout: 3 * time.Second, LogLevel: "debug",
 	}, c)
 
 	c, err = Load(args, env(map[string]string{
-		"ADDRESS": ":2", "DATABASE_DSN": "dsn-env", "TLS_CERT": "ce", "TLS_KEY": "ke",
+		"ADDRESS": ":2", "HTTP_ADDRESS": ":9", "DATABASE_DSN": "dsn-env", "TLS_CERT": "ce", "TLS_KEY": "ke",
 		"JWT_SECRET": "se", "LOG_LEVEL": "warn", "ACCESS_TTL": "5m", "REFRESH_TTL": "1h",
 		"SHUTDOWN_TIMEOUT": "1s", "MAX_BLOB_SIZE": "20",
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, Config{
-		Address: ":2", DatabaseDSN: "dsn-env", TLSCert: "ce", TLSKey: "ke", JWTSecret: "se",
+		Address: ":2", HTTPAddress: ":9", DatabaseDSN: "dsn-env", TLSCert: "ce", TLSKey: "ke", JWTSecret: "se",
 		AccessTTL: 5 * time.Minute, RefreshTTL: time.Hour, MaxBlobSize: 20,
 		ShutdownTimeout: time.Second, LogLevel: "warn",
 	}, c, "env overrides flags")
@@ -73,6 +74,7 @@ func TestLoadErrors(t *testing.T) {
 		"empty cert":       {args: []string{"-tls-cert", ""}},
 		"zero blob":        {args: []string{"-max-blob-size", "0"}},
 		"empty address":    {args: []string{"-a", ""}},
+		"same addresses":   {args: []string{"-a", ":1", "-http-address", ":1"}},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {

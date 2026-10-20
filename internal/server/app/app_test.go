@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
@@ -12,6 +13,7 @@ import (
 	"log/slog"
 	"math/big"
 	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -151,4 +153,55 @@ func TestRunErrors(t *testing.T) {
 	cfg.DatabaseDSN = ""
 	cfg.Address = "256.0.0.1:99999"
 	assert.Error(t, app.Run(context.Background(), cfg, discard()), "bad address")
+}
+
+func TestRunWithGateway(t *testing.T) {
+	certPath, keyPath := writeCert(t)
+	cfg := testutil.ServerConfig()
+	cfg.Address, cfg.HTTPAddress = freeAddr(t), freeAddr(t)
+	cfg.TLSCert, cfg.TLSKey = certPath, keyPath
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- app.Run(ctx, cfg, discard()) }()
+
+	certPEM, err := os.ReadFile(certPath)
+	require.NoError(t, err)
+	pool := x509.NewCertPool()
+	require.True(t, pool.AppendCertsFromPEM(certPEM))
+	client := &http.Client{Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{RootCAs: pool, MinVersion: tls.VersionTLS12},
+	}}
+	require.Eventually(t, func() bool {
+		resp, err := client.Get("https://" + cfg.HTTPAddress + "/api/v1/auth/salt/ilya")
+		if err != nil {
+			return false
+		}
+		_ = resp.Body.Close()
+		return resp.StatusCode == http.StatusOK
+	}, 5*time.Second, 50*time.Millisecond, "gateway answers over TLS")
+
+	cancel()
+	select {
+	case err := <-done:
+		assert.NoError(t, err)
+	case <-time.After(5 * time.Second):
+		t.Fatal("server did not stop")
+	}
+}
+
+func TestRunGatewayListenError(t *testing.T) {
+	certPath, keyPath := writeCert(t)
+	cfg := testutil.ServerConfig()
+	cfg.Address, cfg.HTTPAddress = freeAddr(t), "256.0.0.1:99999"
+	cfg.TLSCert, cfg.TLSKey = certPath, keyPath
+	assert.Error(t, app.Run(context.Background(), cfg, discard()))
+}
+
+func TestServeHTTPError(t *testing.T) {
+	lis, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	require.NoError(t, lis.Close())
+	err = app.ServeHTTP(context.Background(), &http.Server{ReadHeaderTimeout: time.Second}, lis, time.Second, discard())
+	assert.Error(t, err)
 }

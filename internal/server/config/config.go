@@ -15,6 +15,9 @@ import (
 type Config struct {
 	// Address is the gRPC listen address.
 	Address string
+	// HTTPAddress is the listen address of the REST gateway with the OpenAPI spec.
+	// Empty disables the gateway.
+	HTTPAddress string
 	// DatabaseDSN is the PostgreSQL connection string. Empty means in-memory storage.
 	DatabaseDSN string
 	// TLSCert and TLSKey are paths to the server certificate and private key.
@@ -38,6 +41,7 @@ func Load(args []string, getenv func(string) string) (Config, error) {
 	var c Config
 	fs := flag.NewFlagSet("gophkeeper-server", flag.ContinueOnError)
 	fs.StringVar(&c.Address, "a", ":3200", "gRPC listen address (env ADDRESS)")
+	fs.StringVar(&c.HTTPAddress, "http-address", "", "REST gateway listen address, empty to disable (env HTTP_ADDRESS)")
 	fs.StringVar(&c.DatabaseDSN, "d", "", "PostgreSQL DSN, empty for in-memory storage (env DATABASE_DSN)")
 	fs.StringVar(&c.TLSCert, "tls-cert", "certs/server.crt", "TLS certificate file (env TLS_CERT)")
 	fs.StringVar(&c.TLSKey, "tls-key", "certs/server.key", "TLS private key file (env TLS_KEY)")
@@ -56,6 +60,7 @@ func Load(args []string, getenv func(string) string) (Config, error) {
 	}
 	strEnv := map[string]*string{
 		"ADDRESS":      &c.Address,
+		"HTTP_ADDRESS": &c.HTTPAddress,
 		"DATABASE_DSN": &c.DatabaseDSN,
 		"TLS_CERT":     &c.TLSCert,
 		"TLS_KEY":      &c.TLSKey,
@@ -96,6 +101,8 @@ func (c Config) Validate() error {
 	switch {
 	case c.Address == "":
 		return errors.New("config: address is required")
+	case c.HTTPAddress != "" && c.HTTPAddress == c.Address:
+		return errors.New("config: gRPC and HTTP addresses must differ")
 	case c.TLSCert == "" || c.TLSKey == "":
 		return errors.New("config: TLS certificate and key are required")
 	case c.AccessTTL <= 0 || c.RefreshTTL <= 0:

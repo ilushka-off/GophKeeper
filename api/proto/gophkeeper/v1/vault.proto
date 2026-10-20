@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package gophkeeper.v1;
 
+import "google/api/annotations.proto";
 import "gophkeeper/v1/records.proto";
 
 option go_package = "github.com/ilushka-off/GophKeeper/api/gen/gophkeeper/v1;gophkeeperv1";
@@ -9,16 +10,25 @@ option go_package = "github.com/ilushka-off/GophKeeper/api/gen/gophkeeper/v1;gop
 // VaultService gives the owner access to stored records and binary blobs.
 service VaultService {
   // GetRecord returns one record of the owner, tombstones included.
-  rpc GetRecord(GetRecordRequest) returns (GetRecordResponse);
+  rpc GetRecord(GetRecordRequest) returns (GetRecordResponse) {
+    option (google.api.http) = {get: "/api/v1/records/{id}"};
+  }
   // ListRecords returns all live records of the owner.
-  rpc ListRecords(ListRecordsRequest) returns (ListRecordsResponse);
+  rpc ListRecords(ListRecordsRequest) returns (ListRecordsResponse) {
+    option (google.api.http) = {get: "/api/v1/records"};
+  }
   // UploadBlob stores encrypted binary data. The first message carries the blob id,
-  // the following ones carry chunks of at most 1 MB.
+  // the following ones carry chunks of at most 1 MB. Available only over gRPC.
   rpc UploadBlob(stream UploadBlobRequest) returns (UploadBlobResponse);
   // DownloadBlob streams encrypted binary data in chunks.
-  rpc DownloadBlob(DownloadBlobRequest) returns (stream DownloadBlobResponse);
+  // Over REST the chunks come as newline-delimited JSON objects.
+  rpc DownloadBlob(DownloadBlobRequest) returns (stream DownloadBlobResponse) {
+    option (google.api.http) = {get: "/api/v1/blobs/{blob_id}"};
+  }
   // DeleteBlob removes binary data that is no longer referenced.
-  rpc DeleteBlob(DeleteBlobRequest) returns (DeleteBlobResponse);
+  rpc DeleteBlob(DeleteBlobRequest) returns (DeleteBlobResponse) {
+    option (google.api.http) = {delete: "/api/v1/blobs/{blob_id}"};
+  }
 }
 
 message GetRecordRequest {

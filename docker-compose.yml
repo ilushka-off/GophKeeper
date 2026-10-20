@@ -20,6 +20,7 @@ services:
         condition: service_healthy
     environment:
       ADDRESS: ":3200"
+      HTTP_ADDRESS: ":8443"
       DATABASE_DSN: postgres://gophkeeper:gophkeeper@postgres:5432/gophkeeper?sslmode=disable
       TLS_CERT: /certs/server.crt
       TLS_KEY: /certs/server.key
@@ -28,6 +29,7 @@ services:
       - ./certs:/certs:ro
     ports:
       - "3200:3200"
+      - "8443:8443"
 
 volumes:
   pgdata:

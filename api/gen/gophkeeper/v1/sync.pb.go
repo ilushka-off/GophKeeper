@@ -7,6 +7,7 @@
 package gophkeeperv1
 
 import (
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -367,7 +368,7 @@ var File_gophkeeper_v1_sync_proto protoreflect.FileDescriptor
 
 const file_gophkeeper_v1_sync_proto_rawDesc = "" +
 	"\n" +
-	"\x18gophkeeper/v1/sync.proto\x12\rgophkeeper.v1\x1a\x1bgophkeeper/v1/records.proto\"#\n" +
+	"\x18gophkeeper/v1/sync.proto\x12\rgophkeeper.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgophkeeper/v1/records.proto\"#\n" +
 	"\vPullRequest\x12\x14\n" +
 	"\x05since\x18\x01 \x01(\x03R\x05since\"[\n" +
 	"\fPullResponse\x12/\n" +
@@ -388,10 +389,10 @@ const file_gophkeeper_v1_sync_proto_rawDesc = "" +
 	"\fPushResponse\x123\n" +
 	"\baccepted\x18\x01 \x03(\v2\x17.gophkeeper.v1.AcceptedR\baccepted\x123\n" +
 	"\tconflicts\x18\x02 \x03(\v2\x15.gophkeeper.v1.RecordR\tconflicts\x12\x1a\n" +
-	"\brevision\x18\x03 \x01(\x03R\brevision2\x8f\x01\n" +
-	"\vSyncService\x12?\n" +
-	"\x04Pull\x12\x1a.gophkeeper.v1.PullRequest\x1a\x1b.gophkeeper.v1.PullResponse\x12?\n" +
-	"\x04Push\x12\x1a.gophkeeper.v1.PushRequest\x1a\x1b.gophkeeper.v1.PushResponseBFZDgithub.com/ilushka-off/GophKeeper/api/gen/gophkeeper/v1;gophkeeperv1b\x06proto3"
+	"\brevision\x18\x03 \x01(\x03R\brevision2\xc8\x01\n" +
+	"\vSyncService\x12Z\n" +
+	"\x04Pull\x12\x1a.gophkeeper.v1.PullRequest\x1a\x1b.gophkeeper.v1.PullResponse\"\x19\x82\xd3\xe4\x93\x02\x13\x12\x11/api/v1/sync/pull\x12]\n" +
+	"\x04Push\x12\x1a.gophkeeper.v1.PushRequest\x1a\x1b.gophkeeper.v1.PushResponse\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/v1/sync/pushBFZDgithub.com/ilushka-off/GophKeeper/api/gen/gophkeeper/v1;gophkeeperv1b\x06proto3"
 
 var (
 	file_gophkeeper_v1_sync_proto_rawDescOnce sync.Once

@@ -81,6 +81,7 @@ gophkeeper version
 | Флаг | Переменная окружения | По умолчанию |
 |------|----------------------|--------------|
 | `-a` | `ADDRESS` | `:3200` |
+| `-http-address` | `HTTP_ADDRESS` | пусто: REST-шлюз выключен |
 | `-d` | `DATABASE_DSN` | пусто: хранилище в памяти |
 | `-tls-cert`, `-tls-key` | `TLS_CERT`, `TLS_KEY` | `certs/server.crt`, `certs/server.key` |
 | `-jwt-secret` | `JWT_SECRET` | случайный при каждом запуске |
@@ -123,10 +124,34 @@ AES-256-GCM с привязкой к id и типу записи. Файлы ш�
 **Протокол** описан в [`api/proto/gophkeeper/v1`](api/proto/gophkeeper/v1): `AuthService`,
 `VaultService`, `SyncService`.
 
+## REST и Swagger
+
+Кроме gRPC сервер умеет отдавать тот же API как REST/JSON через
+[grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway). Шлюз включается флагом
+`-http-address` (или `HTTP_ADDRESS`), работает по HTTPS с тем же сертификатом и вызывает
+сервисы через внутренний gRPC-сервер, поэтому авторизация, логирование и коды ошибок те же.
+
+```bash
+./bin/gophkeeper-server -http-address :8443
+curl --cacert certs/server.crt https://localhost:8443/swagger.json
+curl --cacert certs/server.crt https://localhost:8443/api/v1/auth/salt/ilya
+curl --cacert certs/server.crt -H "Authorization: Bearer $TOKEN" https://localhost:8443/api/v1/records
+```
+
+- `GET /swagger.json` отдаёт спецификацию OpenAPI 2.0, её можно открыть в Swagger UI или
+  [editor.swagger.io](https://editor.swagger.io). Сгенерированный файл лежит в
+  [`api/openapi/gophkeeper.swagger.json`](api/openapi/gophkeeper.swagger.json).
+- Методы доступны под `/api/v1/...`; токен передаётся заголовком `Authorization: Bearer <token>`.
+- Поля `bytes` (зашифрованные данные, соль) в JSON кодируются в base64. Данные по-прежнему
+  шифруются на клиенте, сервер их не видит.
+- `UploadBlob` (клиентский стрим) есть только в gRPC; `DownloadBlob` по REST отдаёт чанки
+  как JSON-объекты, по одному на строку.
+
 ## Разработка
 
 ```bash
-make gen      # buf generate (нужны buf, protoc-gen-go, protoc-gen-go-grpc)
+make tools    # установить protoc-gen-go, protoc-gen-go-grpc, protoc-gen-grpc-gateway, protoc-gen-openapiv2
+make gen      # buf generate: Go-код, gRPC, grpc-gateway и api/openapi/gophkeeper.swagger.json
 make lint     # golangci-lint + buf lint
 make test     # go test -race ./...
 make cover    # покрытие, не меньше 70%
@@ -147,11 +172,14 @@ make clients  # клиент под linux/darwin/windows × amd64/arm64 в ./dis
 
 ```
 api/proto/gophkeeper/v1   protobuf-контракт
+api/proto/google, api/proto/protoc-gen-openapiv2
+                          сторонние proto для аннотаций grpc-gateway (вендорены)
 api/gen                   сгенерированный код
+api/openapi               спецификация OpenAPI (Swagger)
 cmd/server, cmd/client    точки входа
 internal/model            доменные типы и сериализация записей
 internal/crypto           KDF, AES-GCM, шифрование потоков, хеш паролей
-internal/server/...       конфиг, сервисы, gRPC, хранилища (PostgreSQL, память)
+internal/server/...       конфиг, сервисы, gRPC, REST-шлюз, хранилища (PostgreSQL, память)
 internal/client/...       CLI, TUI, бизнес-логика клиента, SQLite, gRPC-клиент
 test/integration          end-to-end тесты (build tag integration)
 ```

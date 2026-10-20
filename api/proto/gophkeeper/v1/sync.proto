@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package gophkeeper.v1;
 
+import "google/api/annotations.proto";
 import "gophkeeper/v1/records.proto";
 
 option go_package = "github.com/ilushka-off/GophKeeper/api/gen/gophkeeper/v1;gophkeeperv1";
@@ -9,10 +10,17 @@ option go_package = "github.com/ilushka-off/GophKeeper/api/gen/gophkeeper/v1;gop
 // SyncService synchronizes the client's local copy with the server.
 service SyncService {
   // Pull returns every change made after revision since, tombstones included.
-  rpc Pull(PullRequest) returns (PullResponse);
+  rpc Pull(PullRequest) returns (PullResponse) {
+    option (google.api.http) = {get: "/api/v1/sync/pull"};
+  }
   // Push applies client changes. A change whose base version differs from the
   // server version is rejected and the server record is returned as a conflict.
-  rpc Push(PushRequest) returns (PushResponse);
+  rpc Push(PushRequest) returns (PushResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/sync/push"
+      body: "*"
+    };
+  }
 }
 
 message PullRequest {
