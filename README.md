@@ -130,10 +130,17 @@ make gen      # buf generate (нужны buf, protoc-gen-go, protoc-gen-go-grpc)
 make lint     # golangci-lint + buf lint
 make test     # go test -race ./...
 make cover    # покрытие, не меньше 70%
+make test-integration  # end-to-end: сервер по TLS + PostgreSQL + два клиента
 make clients  # клиент под linux/darwin/windows × amd64/arm64 в ./dist
 ```
 
 Тесты PostgreSQL-хранилища запускаются, если задан `TEST_DATABASE_DSN`, иначе пропускаются.
+
+Интеграционные тесты (`test/integration`, build tag `integration`) поднимают настоящий сервер
+с TLS-сертификатом, сгенерированным в тесте, и гоняют через CLI два устройства одного пользователя:
+регистрация, вход, все типы записей, синхронизация, конфликт, файлы больше 1 МБ, удаление и сборка
+мусорных блобов. PostgreSQL берётся из `TEST_DATABASE_DSN`, а если он не задан, запускается в Docker
+через testcontainers. Тесты удаляют таблицы в этой базе, поэтому указывайте только тестовую.
 Релиз собирается goreleaser по тегу `v*`.
 
 ## Структура
@@ -146,4 +153,5 @@ internal/model            доменные типы и сериализация 
 internal/crypto           KDF, AES-GCM, шифрование потоков, хеш паролей
 internal/server/...       конфиг, сервисы, gRPC, хранилища (PostgreSQL, память)
 internal/client/...       CLI, TUI, бизнес-логика клиента, SQLite, gRPC-клиент
+test/integration          end-to-end тесты (build tag integration)
 ```

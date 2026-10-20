@@ -10,7 +10,7 @@ LDFLAGS   := -s -w \
 PLATFORMS := linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64
 COVER_MIN := 70
 
-.PHONY: all gen lint test cover build server client clients cert docker-up docker-down clean
+.PHONY: all gen lint test test-integration cover build server client clients cert docker-up docker-down clean
 
 all: lint test build
 
@@ -27,6 +27,10 @@ lint:
 ## test: run unit tests with the race detector
 test:
 	go test -race -count=1 ./...
+
+## test-integration: run end-to-end tests with PostgreSQL (TEST_DATABASE_DSN or a testcontainers container)
+test-integration:
+	go test -tags integration -count=1 -v ./test/integration/...
 
 ## cover: run tests and check total coverage without generated code
 cover:

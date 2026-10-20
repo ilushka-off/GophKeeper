@@ -57,6 +57,17 @@ jobs:
       - name: Coverage (minimum 70%)
         run: make cover
 
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      # TEST_DATABASE_DSN is not set: PostgreSQL is started with testcontainers in Docker
+      - name: End-to-end tests
+        run: make test-integration
+
   build:
     runs-on: ubuntu-latest
     steps:
