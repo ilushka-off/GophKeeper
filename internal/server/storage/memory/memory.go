@@ -168,6 +168,7 @@ func (s *Storage) InUserTx(ctx context.Context, userID uuid.UUID, fn func(servic
 	return nil
 }
 
+// RecordForUpdate implements service.SyncTx. Staged writes are visible inside the transaction.
 func (t *tx) RecordForUpdate(_ context.Context, id uuid.UUID) (model.Record, error) {
 	if r, ok := t.staged[id]; ok {
 		return r, nil
@@ -179,17 +180,20 @@ func (t *tx) RecordForUpdate(_ context.Context, id uuid.UUID) (model.Record, err
 	return r, nil
 }
 
+// NextRevision implements service.SyncTx.
 func (t *tx) NextRevision(context.Context) (int64, error) {
 	t.revision++
 	return t.revision, nil
 }
 
+// SaveRecord implements service.SyncTx. The record is applied on commit.
 func (t *tx) SaveRecord(_ context.Context, r model.Record) error {
 	r.Payload = bytes.Clone(r.Payload)
 	t.staged[r.ID] = r
 	return nil
 }
 
+// Revision implements service.SyncTx.
 func (t *tx) Revision() int64 { return t.revision }
 
 // SaveBlob implements service.BlobRepository.

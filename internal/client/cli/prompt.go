@@ -45,7 +45,7 @@ func (p *TerminalPrompter) Password(prompt string) (string, error) {
 		p.reader = bufio.NewReader(p.in)
 	}
 	line, err := p.reader.ReadString('\n')
-	if err != nil && !(errors.Is(err, io.EOF) && line != "") {
+	if err != nil && (!errors.Is(err, io.EOF) || line == "") {
 		return "", fmt.Errorf("read password: %w", err)
 	}
 	return strings.TrimRight(line, "\r\n"), nil

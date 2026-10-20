@@ -100,6 +100,7 @@ type wrappedStream struct {
 	ctx context.Context
 }
 
+// Context returns the context with the values added by interceptors.
 func (w *wrappedStream) Context() context.Context { return w.ctx }
 
 // AuthStreamInterceptor is the streaming counterpart of AuthUnaryInterceptor.

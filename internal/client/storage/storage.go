@@ -188,7 +188,8 @@ func scanRecord(sc scanner) (Record, error) {
 }
 
 func (s *Store) queryRecords(ctx context.Context, where string, args ...any) ([]Record, error) {
-	rows, err := s.db.QueryContext(ctx, `SELECT `+recordColumns+` FROM records `+where, args...)
+	// where is always a constant from this file, values are passed as arguments.
+	rows, err := s.db.QueryContext(ctx, `SELECT `+recordColumns+` FROM records `+where, args...) //nolint:gosec // see above
 	if err != nil {
 		return nil, fmt.Errorf("storage: query records: %w", err)
 	}

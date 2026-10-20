@@ -252,6 +252,7 @@ func (s *Storage) InUserTx(ctx context.Context, userID uuid.UUID, fn func(servic
 	return nil
 }
 
+// RecordForUpdate implements service.SyncTx with SELECT ... FOR UPDATE.
 func (t *syncTx) RecordForUpdate(ctx context.Context, id uuid.UUID) (model.Record, error) {
 	r, err := scanRecord(t.tx.QueryRow(ctx, `SELECT `+recordColumns+` FROM records WHERE id = $1 FOR UPDATE`, id))
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -263,13 +264,16 @@ func (t *syncTx) RecordForUpdate(ctx context.Context, id uuid.UUID) (model.Recor
 	return r, nil
 }
 
+// NextRevision implements service.SyncTx. The counter is written to users on commit.
 func (t *syncTx) NextRevision(context.Context) (int64, error) {
 	t.revision++
 	return t.revision, nil
 }
 
+// Revision implements service.SyncTx.
 func (t *syncTx) Revision() int64 { return t.revision }
 
+// SaveRecord implements service.SyncTx with an upsert that never changes the owner.
 func (t *syncTx) SaveRecord(ctx context.Context, r model.Record) error {
 	payload := r.Payload
 	if payload == nil {

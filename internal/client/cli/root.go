@@ -22,7 +22,7 @@ const (
 	EnvServer         = "GOPHKEEPER_SERVER"
 	EnvCACert         = "GOPHKEEPER_CA_CERT"
 	EnvDataDir        = "GOPHKEEPER_DATA_DIR"
-	EnvMasterPassword = "GOPHKEEPER_MASTER_PASSWORD"
+	EnvMasterPassword = "GOPHKEEPER_MASTER_PASSWORD" //nolint:gosec // name of the variable, not a credential
 )
 
 // DefaultServer is the server address used when none is configured.
@@ -228,8 +228,7 @@ func Execute(ctx context.Context, env Env, args []string) int {
 }
 
 func userMessage(err error) error {
-	switch {
-	case errors.Is(err, remote.ErrUnavailable):
+	if errors.Is(err, remote.ErrUnavailable) {
 		return fmt.Errorf("cannot reach the server: %w", err)
 	}
 	return err

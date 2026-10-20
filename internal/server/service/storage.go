@@ -11,7 +11,7 @@ import (
 	"github.com/ilushka-off/GophKeeper/internal/model"
 )
 
-//go:generate mockgen -source=storage.go -destination=mocks/storage_mock.go -package=mocks
+//go:generate go run go.uber.org/mock/mockgen -source=storage.go -destination=mocks/storage_mock.go -package=mocks
 
 // UserRepository stores users.
 type UserRepository interface {
