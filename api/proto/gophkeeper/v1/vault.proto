@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package gophkeeper.v1;
+
+import "gophkeeper/v1/records.proto";
+
+option go_package = "github.com/ilushka-off/GophKeeper/api/gen/gophkeeper/v1;gophkeeperv1";
+
+// VaultService gives the owner access to stored records and binary blobs.
+service VaultService {
+  // GetRecord returns one record of the owner, tombstones included.
+  rpc GetRecord(GetRecordRequest) returns (GetRecordResponse);
+  // ListRecords returns all live records of the owner.
+  rpc ListRecords(ListRecordsRequest) returns (ListRecordsResponse);
+  // UploadBlob stores encrypted binary data. The first message carries the blob id,
+  // the following ones carry chunks of at most 1 MB.
+  rpc UploadBlob(stream UploadBlobRequest) returns (UploadBlobResponse);
+  // DownloadBlob streams encrypted binary data in chunks.
+  rpc DownloadBlob(DownloadBlobRequest) returns (stream DownloadBlobResponse);
+  // DeleteBlob removes binary data that is no longer referenced.
+  rpc DeleteBlob(DeleteBlobRequest) returns (DeleteBlobResponse);
+}
+
+message GetRecordRequest {
+  string id = 1;
+}
+
+message GetRecordResponse {
+  Record record = 1;
+}
+
+message ListRecordsRequest {}
+
+message ListRecordsResponse {
+  repeated Record records = 1;
+}
+
+message UploadBlobRequest {
+  oneof data {
+    // Blob id, must be sent in the first message.
+    string blob_id = 1;
+    // Encrypted chunk.
+    bytes chunk = 2;
+  }
+}
+
+message UploadBlobResponse {
+  string blob_id = 1;
+  int64 size = 2;
+}
+
+message DownloadBlobRequest {
+  string blob_id = 1;
+}
+
+message DownloadBlobResponse {
+  bytes chunk = 1;
+}
+
+message DeleteBlobRequest {
+  string blob_id = 1;
+}
+
+message DeleteBlobResponse {}

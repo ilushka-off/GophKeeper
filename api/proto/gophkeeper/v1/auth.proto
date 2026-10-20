@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package gophkeeper.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/ilushka-off/GophKeeper/api/gen/gophkeeper/v1;gophkeeperv1";
+
+// AuthService registers and authenticates users.
+service AuthService {
+  // Register creates a user and returns a token pair.
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  // GetSalt returns the KDF salt the client needs to derive keys before Login.
+  rpc GetSalt(GetSaltRequest) returns (GetSaltResponse);
+  // Login checks the login password and returns a token pair.
+  rpc Login(LoginRequest) returns (LoginResponse);
+  // Refresh exchanges a refresh token for a new token pair.
+  rpc Refresh(RefreshRequest) returns (RefreshResponse);
+  // Logout revokes a refresh token.
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+}
+
+// Tokens is a pair of access and refresh tokens.
+message Tokens {
+  string access_token = 1;
+  string refresh_token = 2;
+  google.protobuf.Timestamp access_expires_at = 3;
+}
+
+message RegisterRequest {
+  string login = 1;
+  // Login password derived from the master password on the client.
+  string password = 2;
+  // Salt used by the client to derive keys from the master password.
+  bytes kdf_salt = 3;
+}
+
+message RegisterResponse {
+  Tokens tokens = 1;
+  bytes kdf_salt = 2;
+}
+
+message GetSaltRequest {
+  string login = 1;
+}
+
+message GetSaltResponse {
+  bytes kdf_salt = 1;
+}
+
+message LoginRequest {
+  string login = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  Tokens tokens = 1;
+  bytes kdf_salt = 2;
+}
+
+message RefreshRequest {
+  string refresh_token = 1;
+}
+
+message RefreshResponse {
+  Tokens tokens = 1;
+}
+
+message LogoutRequest {
+  string refresh_token = 1;
+}
+
+message LogoutResponse {}
