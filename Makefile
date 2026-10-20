@@ -60,6 +60,8 @@ cert:
 	openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -days 365 \
 		-keyout certs/server.key -out certs/server.crt -subj "/CN=localhost" \
 		-addext "subjectAltName=DNS:localhost,DNS:server,IP:127.0.0.1"
+	# the server container runs as a non-root user and must be able to read the dev key
+	chmod 644 certs/server.key
 
 ## docker-up: start PostgreSQL and the server
 docker-up: cert
