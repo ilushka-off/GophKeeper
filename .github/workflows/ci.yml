@@ -25,6 +25,7 @@ jobs:
           format: false
           breaking: false
           push: false
+          pr_comment: false
 
   test:
     runs-on: ubuntu-latest
