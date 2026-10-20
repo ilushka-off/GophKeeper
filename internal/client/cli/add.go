@@ -191,7 +191,7 @@ func newEditCmd(rt *runtime) *cobra.Command {
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 		flags := cmd.Flags()
-		if flags.NFlag() == 0 {
+		if changedRecordFlags(flags) == 0 {
 			return fmt.Errorf("nothing to change: pass at least one flag")
 		}
 		if err := rt.open(ctx, true); err != nil {
@@ -236,6 +236,20 @@ var typeFlags = map[model.RecordType][]string{
 	model.TypeCard:        {"number", "holder", "expiry", "cvv"},
 }
 
+// globalFlags are the persistent flags of the root command; they never change a record.
+var globalFlags = map[string]bool{"server": true, "ca-cert": true, "data-dir": true}
+
+// changedRecordFlags counts the flags given on the command line that change a record.
+func changedRecordFlags(flags *pflag.FlagSet) int {
+	n := 0
+	flags.Visit(func(fl *pflag.Flag) {
+		if !globalFlags[fl.Name] {
+			n++
+		}
+	})
+	return n
+}
+
 func applyEdit(flags *pflag.FlagSet, f *recordFlags, p *model.Payload) error {
 	allowed := map[string]bool{"name": true, "meta": true}
 	for _, n := range typeFlags[p.Type()] {
@@ -243,7 +257,7 @@ func applyEdit(flags *pflag.FlagSet, f *recordFlags, p *model.Payload) error {
 	}
 	var bad error
 	flags.Visit(func(fl *pflag.Flag) {
-		if fl.Name == "server" || fl.Name == "ca-cert" || fl.Name == "data-dir" {
+		if globalFlags[fl.Name] {
 			return
 		}
 		if !allowed[fl.Name] && bad == nil {

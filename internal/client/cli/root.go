@@ -108,7 +108,12 @@ func (r *runtime) close() {
 
 // open opens the local vault and creates the server client. With unlock it also asks
 // for the master password and unlocks the vault.
-func (r *runtime) open(ctx context.Context, unlock bool) error {
+func (r *runtime) open(ctx context.Context, unlock bool) (err error) {
+	defer func() {
+		if err != nil {
+			r.close()
+		}
+	}()
 	path := filepath.Join(r.opts.DataDir, "vault.db")
 	st, err := storage.Open(ctx, path)
 	if err != nil {
