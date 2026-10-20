@@ -1,8 +1,10 @@
 package cli
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -264,7 +266,7 @@ func newGetCmd(rt *runtime) *cobra.Command {
 	return cmd
 }
 
-func saveToFile(ctx contextLike, a *app.App, e app.Entry, path string, out interface{ Write([]byte) (int, error) }) error {
+func saveToFile(ctx context.Context, a *app.App, e app.Entry, path string, out io.Writer) error {
 	tmp := path + ".part"
 	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
 	if err != nil {
@@ -285,7 +287,7 @@ func saveToFile(ctx contextLike, a *app.App, e app.Entry, path string, out inter
 	return nil
 }
 
-func printEntry(w interface{ Write([]byte) (int, error) }, e app.Entry) {
+func printEntry(w io.Writer, e app.Entry) {
 	tw := tabwriter.NewWriter(w, 0, 4, 1, ' ', 0)
 	row := func(k, v string) {
 		if v != "" {
