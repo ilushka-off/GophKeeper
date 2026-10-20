@@ -19,6 +19,8 @@ jobs:
       - uses: golangci/golangci-lint-action@v8
         with:
           version: v2.5.0
+          # config verify downloads a JSON schema from golangci-lint.run and fails when the site is slow
+          verify: false
       - uses: bufbuild/buf-action@v1
         with:
           lint: true
