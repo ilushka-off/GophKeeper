@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: gophkeeper
+      POSTGRES_PASSWORD: gophkeeper
+      POSTGRES_DB: gophkeeper
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gophkeeper"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ADDRESS: ":3200"
+      HTTP_ADDRESS: ":8443"
+      DATABASE_DSN: postgres://gophkeeper:gophkeeper@postgres:5432/gophkeeper?sslmode=disable
+      TLS_CERT: /certs/server.crt
+      TLS_KEY: /certs/server.key
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+    volumes:
+      - ./certs:/certs:ro
+    ports:
+      - "3200:3200"
+      - "8443:8443"
+
+volumes:
+  pgdata:

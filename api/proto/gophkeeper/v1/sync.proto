@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package gophkeeper.v1;
+
+import "google/api/annotations.proto";
+import "gophkeeper/v1/records.proto";
+
+option go_package = "github.com/ilushka-off/GophKeeper/api/gen/gophkeeper/v1;gophkeeperv1";
+
+// SyncService synchronizes the client's local copy with the server.
+service SyncService {
+  // Pull returns every change made after revision since, tombstones included.
+  rpc Pull(PullRequest) returns (PullResponse) {
+    option (google.api.http) = {get: "/api/v1/sync/pull"};
+  }
+  // Push applies client changes. A change whose base version differs from the
+  // server version is rejected and the server record is returned as a conflict.
+  rpc Push(PushRequest) returns (PushResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/sync/push"
+      body: "*"
+    };
+  }
+}
+
+message PullRequest {
+  int64 since = 1;
+}
+
+message PullResponse {
+  // Records ordered by revision.
+  repeated Record records = 1;
+  // Current revision of the user.
+  int64 revision = 2;
+}
+
+// Change is a client-side modification of a record.
+message Change {
+  string id = 1;
+  RecordType type = 2;
+  bytes payload = 3;
+  bool deleted = 4;
+  // Server version the client based the change on, 0 for a new record.
+  int64 base_version = 5;
+}
+
+message PushRequest {
+  repeated Change changes = 1;
+}
+
+// Accepted describes a change the server applied.
+message Accepted {
+  string id = 1;
+  int64 version = 2;
+  int64 revision = 3;
+}
+
+message PushResponse {
+  repeated Accepted accepted = 1;
+  // Current server state of the records that conflicted.
+  repeated Record conflicts = 2;
+  int64 revision = 3;
+}

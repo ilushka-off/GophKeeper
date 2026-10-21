@@ -1,0 +1,16 @@
+version: v2
+modules:
+  - path: api/proto
+lint:
+  use:
+    - STANDARD
+  ignore:
+    # Third-party protos vendored for grpc-gateway annotations.
+    - api/proto/google
+    - api/proto/protoc-gen-openapiv2
+breaking:
+  use:
+    - FILE
+  ignore:
+    - api/proto/google
+    - api/proto/protoc-gen-openapiv2

@@ -1,0 +1,721 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "GophKeeper API",
+    "description": "REST view of the GophKeeper gRPC API. Record payloads and blobs are encrypted on the client, the server never sees them in plaintext. Bytes fields are base64 in JSON. UploadBlob is available only over gRPC.",
+    "version": "1.0"
+  },
+  "tags": [
+    {
+      "name": "AuthService"
+    },
+    {
+      "name": "SyncService"
+    },
+    {
+      "name": "VaultService"
+    }
+  ],
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/auth/login": {
+      "post": {
+        "summary": "Login checks the login password and returns a token pair.",
+        "operationId": "AuthService_Login",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1LoginResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1LoginRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ],
+        "security": []
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "summary": "Logout revokes a refresh token.",
+        "operationId": "AuthService_Logout",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1LogoutResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1LogoutRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ],
+        "security": []
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "summary": "Refresh exchanges a refresh token for a new token pair.",
+        "operationId": "AuthService_Refresh",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RefreshResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RefreshRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ],
+        "security": []
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "summary": "Register creates a user and returns a token pair.",
+        "operationId": "AuthService_Register",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RegisterResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RegisterRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ],
+        "security": []
+      }
+    },
+    "/api/v1/auth/salt/{login}": {
+      "get": {
+        "summary": "GetSalt returns the KDF salt the client needs to derive keys before Login.",
+        "operationId": "AuthService_GetSalt",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetSaltResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "login",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ],
+        "security": []
+      }
+    },
+    "/api/v1/blobs/{blobId}": {
+      "get": {
+        "summary": "DownloadBlob streams encrypted binary data in chunks.\nOver REST the chunks come as newline-delimited JSON objects.",
+        "operationId": "VaultService_DownloadBlob",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/v1DownloadBlobResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/rpcStatus"
+                }
+              },
+              "title": "Stream result of v1DownloadBlobResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "blobId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "VaultService"
+        ]
+      },
+      "delete": {
+        "summary": "DeleteBlob removes binary data that is no longer referenced.",
+        "operationId": "VaultService_DeleteBlob",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteBlobResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "blobId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "VaultService"
+        ]
+      }
+    },
+    "/api/v1/records": {
+      "get": {
+        "summary": "ListRecords returns all live records of the owner.",
+        "operationId": "VaultService_ListRecords",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListRecordsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "VaultService"
+        ]
+      }
+    },
+    "/api/v1/records/{id}": {
+      "get": {
+        "summary": "GetRecord returns one record of the owner, tombstones included.",
+        "operationId": "VaultService_GetRecord",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetRecordResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "VaultService"
+        ]
+      }
+    },
+    "/api/v1/sync/pull": {
+      "get": {
+        "summary": "Pull returns every change made after revision since, tombstones included.",
+        "operationId": "SyncService_Pull",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PullResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "SyncService"
+        ]
+      }
+    },
+    "/api/v1/sync/push": {
+      "post": {
+        "summary": "Push applies client changes. A change whose base version differs from the\nserver version is rejected and the server record is returned as a conflict.",
+        "operationId": "SyncService_Push",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PushResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1PushRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SyncService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1Accepted": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string",
+          "format": "int64"
+        },
+        "revision": {
+          "type": "string",
+          "format": "int64"
+        }
+      },
+      "description": "Accepted describes a change the server applied."
+    },
+    "v1Change": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/v1RecordType"
+        },
+        "payload": {
+          "type": "string",
+          "format": "byte"
+        },
+        "deleted": {
+          "type": "boolean"
+        },
+        "baseVersion": {
+          "type": "string",
+          "format": "int64",
+          "description": "Server version the client based the change on, 0 for a new record."
+        }
+      },
+      "description": "Change is a client-side modification of a record."
+    },
+    "v1DeleteBlobResponse": {
+      "type": "object"
+    },
+    "v1DownloadBlobResponse": {
+      "type": "object",
+      "properties": {
+        "chunk": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "v1GetRecordResponse": {
+      "type": "object",
+      "properties": {
+        "record": {
+          "$ref": "#/definitions/v1Record"
+        }
+      }
+    },
+    "v1GetSaltResponse": {
+      "type": "object",
+      "properties": {
+        "kdfSalt": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "v1ListRecordsResponse": {
+      "type": "object",
+      "properties": {
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Record"
+          }
+        }
+      }
+    },
+    "v1LoginRequest": {
+      "type": "object",
+      "properties": {
+        "login": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "v1LoginResponse": {
+      "type": "object",
+      "properties": {
+        "tokens": {
+          "$ref": "#/definitions/v1Tokens"
+        },
+        "kdfSalt": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "v1LogoutRequest": {
+      "type": "object",
+      "properties": {
+        "refreshToken": {
+          "type": "string"
+        }
+      }
+    },
+    "v1LogoutResponse": {
+      "type": "object"
+    },
+    "v1PullResponse": {
+      "type": "object",
+      "properties": {
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Record"
+          },
+          "description": "Records ordered by revision."
+        },
+        "revision": {
+          "type": "string",
+          "format": "int64",
+          "description": "Current revision of the user."
+        }
+      }
+    },
+    "v1PushRequest": {
+      "type": "object",
+      "properties": {
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Change"
+          }
+        }
+      }
+    },
+    "v1PushResponse": {
+      "type": "object",
+      "properties": {
+        "accepted": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Accepted"
+          }
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Record"
+          },
+          "description": "Current server state of the records that conflicted."
+        },
+        "revision": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "v1Record": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "UUID generated by the client."
+        },
+        "type": {
+          "$ref": "#/definitions/v1RecordType"
+        },
+        "payload": {
+          "type": "string",
+          "format": "byte",
+          "description": "Ciphertext: AES-256-GCM of the serialized payload (data + metadata)."
+        },
+        "version": {
+          "type": "string",
+          "format": "int64",
+          "description": "Version grows on every change of the record."
+        },
+        "revision": {
+          "type": "string",
+          "format": "int64",
+          "description": "Revision of the user's change counter at the time of the last change."
+        },
+        "deleted": {
+          "type": "boolean",
+          "description": "Deleted marks a tombstone."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "Record is an encrypted user record as it is stored on the server."
+    },
+    "v1RecordType": {
+      "type": "string",
+      "enum": [
+        "RECORD_TYPE_UNSPECIFIED",
+        "RECORD_TYPE_CREDENTIALS",
+        "RECORD_TYPE_TEXT",
+        "RECORD_TYPE_BINARY",
+        "RECORD_TYPE_CARD",
+        "RECORD_TYPE_OTP"
+      ],
+      "default": "RECORD_TYPE_UNSPECIFIED",
+      "description": "RecordType is the kind of private data stored in a record.\nThe server sees only the type, the payload itself is encrypted on the client.\n\n - RECORD_TYPE_OTP: A TOTP secret for generating one-time codes."
+    },
+    "v1RefreshRequest": {
+      "type": "object",
+      "properties": {
+        "refreshToken": {
+          "type": "string"
+        }
+      }
+    },
+    "v1RefreshResponse": {
+      "type": "object",
+      "properties": {
+        "tokens": {
+          "$ref": "#/definitions/v1Tokens"
+        }
+      }
+    },
+    "v1RegisterRequest": {
+      "type": "object",
+      "properties": {
+        "login": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string",
+          "description": "Login password derived from the master password on the client."
+        },
+        "kdfSalt": {
+          "type": "string",
+          "format": "byte",
+          "description": "Salt used by the client to derive keys from the master password."
+        }
+      }
+    },
+    "v1RegisterResponse": {
+      "type": "object",
+      "properties": {
+        "tokens": {
+          "$ref": "#/definitions/v1Tokens"
+        },
+        "kdfSalt": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "v1Tokens": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string"
+        },
+        "refreshToken": {
+          "type": "string"
+        },
+        "accessExpiresAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "Tokens is a pair of access and refresh tokens."
+    },
+    "v1UploadBlobResponse": {
+      "type": "object",
+      "properties": {
+        "blobId": {
+          "type": "string"
+        },
+        "size": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "Bearer": {
+      "type": "apiKey",
+      "description": "Access token in the form \"Bearer \u003ctoken\u003e\"",
+      "name": "Authorization",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "Bearer": []
+    }
+  ]
+}
