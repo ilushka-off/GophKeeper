@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"os"
 	"path/filepath"
 	"slices"
@@ -184,12 +185,18 @@ func (a *App) Delete(ctx context.Context, id uuid.UUID) error {
 		return model.ErrNotFound
 	}
 	if r.Type == model.TypeBinary {
-		if e, err := a.open(r); err == nil {
-			if bin, ok := e.Payload.Data.(model.Binary); ok {
-				if err := a.store.AddOrphanBlob(ctx, bin.BlobID); err != nil {
-					return err
-				}
-			}
+		// The tombstone drops the payload, so the blob id must be saved for GC now:
+		// a record that cannot be read is not deleted, otherwise its blob would leak on the server.
+		e, err := a.open(r)
+		if err != nil {
+			return fmt.Errorf("read binary record before delete: %w", err)
+		}
+		bin, ok := e.Payload.Data.(model.Binary)
+		if !ok {
+			return fmt.Errorf("%w: binary record has %s payload", model.ErrInvalidArgument, e.Payload.Type())
+		}
+		if err := a.store.AddOrphanBlob(ctx, bin.BlobID); err != nil {
+			return err
 		}
 	}
 	if r.Version == 0 {
@@ -282,30 +289,37 @@ func (a *App) SaveFile(ctx context.Context, id uuid.UUID, w io.Writer) (int64, e
 		return 0, fmt.Errorf("bad blob id: %w", err)
 	}
 
-	chunks := make(chan []byte)
-	errc := make(chan error, 1)
-	dctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	go func() {
-		defer close(chunks)
-		errc <- a.remote.DownloadBlob(dctx, blobID, func(c []byte) error {
-			select {
-			case chunks <- c:
-				return nil
-			case <-dctx.Done():
-				return dctx.Err()
-			}
-		})
-	}()
-	next := func() ([]byte, error) {
-		c, ok := <-chunks
-		if !ok {
-			if err := <-errc; err != nil {
-				return nil, err
-			}
+	next, stop := iter.Pull2(a.blobChunks(ctx, blobID))
+	defer stop()
+	return a.cipher.DecryptStream(func() ([]byte, error) {
+		c, err, ok := next()
+		switch {
+		case !ok:
 			return nil, io.EOF
+		case err != nil:
+			return nil, err
 		}
 		return c, nil
+	}, blobID[:], w)
+}
+
+// errStopDownload aborts a download when the consumer of blobChunks stops early.
+var errStopDownload = errors.New("download stopped")
+
+// blobChunks streams the encrypted chunks of a blob from the server.
+// A download error is yielded as the last element.
+func (a *App) blobChunks(ctx context.Context, blobID uuid.UUID) iter.Seq2[[]byte, error] {
+	return func(yield func([]byte, error) bool) {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		err := a.remote.DownloadBlob(ctx, blobID, func(c []byte) error {
+			if !yield(c, nil) {
+				return errStopDownload
+			}
+			return nil
+		})
+		if err != nil && !errors.Is(err, errStopDownload) {
+			yield(nil, err)
+		}
 	}
-	return a.cipher.DecryptStream(next, blobID[:], w)
 }

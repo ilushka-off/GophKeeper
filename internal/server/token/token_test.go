@@ -2,6 +2,7 @@ package token
 
 import (
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -18,24 +19,24 @@ func TestNewManagerErrors(t *testing.T) {
 }
 
 func TestIssueParse(t *testing.T) {
-	m, err := NewManager([]byte("secret"), time.Minute)
-	require.NoError(t, err)
-	now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-	m.now = func() time.Time { return now }
+	// The bubble's fake clock lets the token expire without waiting or a clock stub.
+	synctest.Test(t, func(t *testing.T) {
+		m, err := NewManager([]byte("secret"), time.Minute)
+		require.NoError(t, err)
 
-	id := uuid.New()
-	tok, exp, err := m.IssueAccess(id)
-	require.NoError(t, err)
-	assert.Equal(t, now.Add(time.Minute), exp)
+		id := uuid.New()
+		tok, exp, err := m.IssueAccess(id)
+		require.NoError(t, err)
+		assert.Equal(t, time.Now().Add(time.Minute), exp)
 
-	got, err := m.ParseAccess(tok)
-	require.NoError(t, err)
-	assert.Equal(t, id, got)
+		got, err := m.ParseAccess(tok)
+		require.NoError(t, err)
+		assert.Equal(t, id, got)
 
-	// expired
-	m.now = func() time.Time { return now.Add(2 * time.Minute) }
-	_, err = m.ParseAccess(tok)
-	require.ErrorIs(t, err, ErrInvalidToken)
+		time.Sleep(2 * time.Minute)
+		_, err = m.ParseAccess(tok)
+		require.ErrorIs(t, err, ErrInvalidToken, "expired")
+	})
 }
 
 func TestParseInvalid(t *testing.T) {

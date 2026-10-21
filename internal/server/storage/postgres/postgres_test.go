@@ -280,6 +280,15 @@ func TestBlobs(t *testing.T) {
 	require.NoError(t, s.ReadBlob(ctx, u.ID, blobID, func([]byte) error { return nil }), "other user cannot delete")
 	require.NoError(t, s.DeleteBlob(ctx, u.ID, blobID))
 	assert.ErrorIs(t, s.ReadBlob(ctx, u.ID, blobID, func([]byte) error { return nil }), model.ErrNotFound)
+
+	empty := uuid.New()
+	size, err = s.SaveBlob(ctx, u.ID, empty, feed())
+	require.NoError(t, err)
+	assert.Zero(t, size)
+	calls := 0
+	require.NoError(t, s.ReadBlob(ctx, u.ID, empty, func([]byte) error { calls++; return nil }),
+		"a blob without chunks is empty, not missing")
+	assert.Zero(t, calls)
 }
 
 func TestClosedPoolErrors(t *testing.T) {

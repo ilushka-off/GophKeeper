@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/google/uuid"
@@ -150,13 +151,15 @@ func TestAuth_RefreshIsSingleUse(t *testing.T) {
 }
 
 func TestAuth_RefreshExpired(t *testing.T) {
-	ctx := context.Background()
-	a, _ := newAuth(t)
-	tokens, err := a.Register(ctx, "ilya", "pw", salt())
-	require.NoError(t, err)
-	service.SetAuthNow(a, func() time.Time { return time.Now().Add(2 * time.Hour) })
-	_, err = a.Refresh(ctx, tokens.RefreshToken)
-	assert.ErrorIs(t, err, model.ErrUnauthenticated)
+	synctest.Test(t, func(t *testing.T) {
+		ctx := context.Background()
+		a, _ := newAuth(t)
+		tokens, err := a.Register(ctx, "ilya", "pw", salt())
+		require.NoError(t, err)
+		time.Sleep(2 * time.Hour)
+		_, err = a.Refresh(ctx, tokens.RefreshToken)
+		assert.ErrorIs(t, err, model.ErrUnauthenticated)
+	})
 }
 
 func TestAuth_Logout(t *testing.T) {

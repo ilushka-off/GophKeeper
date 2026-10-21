@@ -12,8 +12,6 @@ import (
 	"github.com/ilushka-off/GophKeeper/internal/otp"
 )
 
-type contextLike = context.Context
-
 // recordFlags are the flags shared by add and edit.
 type recordFlags struct {
 	name, meta             string

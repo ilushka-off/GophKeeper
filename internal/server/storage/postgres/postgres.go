@@ -331,31 +331,41 @@ func (s *Storage) SaveBlob(ctx context.Context, userID, blobID uuid.UUID, next f
 	return size, nil
 }
 
-// ReadBlob implements service.BlobRepository. Chunks are read one by one to keep memory flat.
+// ReadBlob implements service.BlobRepository. The ownership check and all chunks come from
+// a single query; rows are streamed from the connection, so memory stays flat.
+// A blob without chunks yields one row with NULL data and is read as empty.
 func (s *Storage) ReadBlob(ctx context.Context, userID, blobID uuid.UUID, fn func([]byte) error) error {
-	var exists bool
-	err := s.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM blobs WHERE id = $1 AND user_id = $2)`,
-		blobID, userID).Scan(&exists)
+	rows, err := s.pool.Query(ctx, `
+		SELECT c.data
+		FROM blobs b
+		LEFT JOIN blob_chunks c ON c.blob_id = b.id
+		WHERE b.id = $1 AND b.user_id = $2
+		ORDER BY c.seq`, blobID, userID)
 	if err != nil {
 		return fmt.Errorf("postgres: select blob: %w", err)
 	}
-	if !exists {
-		return model.ErrNotFound
-	}
-	for seq := 0; ; seq++ {
+	defer rows.Close()
+	found := false
+	for rows.Next() {
+		found = true
 		var data []byte
-		err := s.pool.QueryRow(ctx, `SELECT data FROM blob_chunks WHERE blob_id = $1 AND seq = $2`,
-			blobID, seq).Scan(&data)
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil
+		if err := rows.Scan(&data); err != nil {
+			return fmt.Errorf("postgres: scan chunk: %w", err)
 		}
-		if err != nil {
-			return fmt.Errorf("postgres: select chunk: %w", err)
+		if data == nil {
+			continue
 		}
 		if err := fn(data); err != nil {
 			return err
 		}
 	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("postgres: select blob: %w", err)
+	}
+	if !found {
+		return model.ErrNotFound
+	}
+	return nil
 }
 
 // DeleteBlob implements service.BlobRepository.

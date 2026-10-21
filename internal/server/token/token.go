@@ -22,7 +22,6 @@ const issuer = "gophkeeper"
 type Manager struct {
 	secret    []byte
 	accessTTL time.Duration
-	now       func() time.Time
 }
 
 // NewManager creates a token manager. The secret must not be empty.
@@ -33,12 +32,12 @@ func NewManager(secret []byte, accessTTL time.Duration) (*Manager, error) {
 	if accessTTL <= 0 {
 		return nil, errors.New("token: access ttl must be positive")
 	}
-	return &Manager{secret: secret, accessTTL: accessTTL, now: time.Now}, nil
+	return &Manager{secret: secret, accessTTL: accessTTL}, nil
 }
 
 // IssueAccess returns a signed access token for the user and its expiry time.
 func (m *Manager) IssueAccess(userID uuid.UUID) (string, time.Time, error) {
-	now := m.now()
+	now := time.Now()
 	exp := now.Add(m.accessTTL)
 	claims := jwt.RegisteredClaims{
 		Issuer:    issuer,
@@ -62,7 +61,6 @@ func (m *Manager) ParseAccess(tokenString string) (uuid.UUID, error) {
 		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}),
 		jwt.WithIssuer(issuer),
 		jwt.WithExpirationRequired(),
-		jwt.WithTimeFunc(m.now),
 	)
 	if err != nil {
 		return uuid.Nil, ErrInvalidToken

@@ -561,3 +561,28 @@ func TestSyncServerError(t *testing.T) {
 	_, err = a.lastRevision(ctx)
 	require.Error(t, err)
 }
+
+func TestDeleteUnreadableBinaryKeepsRecord(t *testing.T) {
+	ctx := context.Background()
+	srv := testutil.StartServer(t)
+	a, st := newApp(t, srv)
+	require.NoError(t, a.SignUp(ctx, "ilya", master))
+	path := filepath.Join(t.TempDir(), "f.bin")
+	require.NoError(t, os.WriteFile(path, []byte("data"), 0o600))
+	id, err := a.AddFile(ctx, "file", "", path)
+	require.NoError(t, err)
+	mustSync(t, a)
+
+	r, err := st.Record(ctx, id)
+	require.NoError(t, err)
+	r.Payload[len(r.Payload)-1] ^= 0xff
+	require.NoError(t, st.PutRecord(ctx, r))
+
+	require.Error(t, a.Delete(ctx, id), "the blob id cannot be read, so the delete must not go through")
+	r, err = st.Record(ctx, id)
+	require.NoError(t, err)
+	assert.False(t, r.Deleted)
+	orphans, err := st.OrphanBlobs(ctx)
+	require.NoError(t, err)
+	assert.Empty(t, orphans)
+}

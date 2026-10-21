@@ -38,7 +38,6 @@ type Auth struct {
 	hashParams crypto.KDFParams
 	refreshTTL time.Duration
 	saltSecret []byte
-	now        func() time.Time
 }
 
 // AuthConfig configures Auth.
@@ -61,7 +60,6 @@ func NewAuth(users UserRepository, tokens TokenRepository, issuer TokenIssuer, c
 		hashParams: cfg.HashParams,
 		refreshTTL: cfg.RefreshTTL,
 		saltSecret: cfg.SaltSecret,
-		now:        time.Now,
 	}
 }
 
@@ -154,7 +152,7 @@ func (a *Auth) Refresh(ctx context.Context, refreshToken string) (model.Tokens, 
 	if err != nil {
 		return model.Tokens{}, fmt.Errorf("consume refresh token: %w", err)
 	}
-	if !a.now().Before(rt.ExpiresAt) {
+	if !time.Now().Before(rt.ExpiresAt) {
 		return model.Tokens{}, model.ErrUnauthenticated
 	}
 	return a.issue(ctx, rt.UserID)
@@ -193,7 +191,7 @@ func (a *Auth) issue(ctx context.Context, userID uuid.UUID) (model.Tokens, error
 	err = a.tokens.SaveRefreshToken(ctx, model.RefreshToken{
 		Hash:      hash,
 		UserID:    userID,
-		ExpiresAt: a.now().Add(a.refreshTTL),
+		ExpiresAt: time.Now().Add(a.refreshTTL),
 	})
 	if err != nil {
 		return model.Tokens{}, fmt.Errorf("save refresh token: %w", err)
